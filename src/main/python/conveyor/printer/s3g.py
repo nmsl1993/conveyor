@@ -122,11 +122,15 @@ class S3gPrinter(object):
         task = conveyor.task.Task()
         task.runningevent.attach(runningcallback)
         return task
+
     def printLine(self, line):
         #self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:
                 with serial.Serial(self._device, self._baudrate, timeout=0) as serialfp:
+                    serialfp.baudrate = 9600
+                    serialfp.baudrate = self._baudrate
+
                     writer = s3g.Writer.StreamWriter(serialfp)
                     parser = s3g.Gcode.GcodeParser()
                     parser.state.profile = self._profile

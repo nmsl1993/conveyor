@@ -103,9 +103,9 @@ class _ClientThread(threading.Thread):
         task.stoppedevent.attach(self._stoppedcallback)
         self._server.appendtask(task)
         return None
-    def _jog(self, x=0, y=0, z=0):
-        self._log.debug('jog x %f y %f z %f', x, y, z)
-        line = "G1 X%0.3f Y%0.3f Z%0.3f" % (x,y,z)
+    def _jog(self, x=0, y=0, z=0, f=0):
+        self._log.debug('jog x %f y %f z %f f %f', x, y, z, f)
+        line = "G1 X%0.3f Y%0.3f Z%0.3f F%0.3f" % (x,y,z,f)
         self._log.debug('jog line: %s', line)
         def runningcallback(task):
             self._log.info(

@@ -92,6 +92,7 @@ class _ClientMain(conveyor.main.AbstractMain):
         parser.add_argument('-x', help="enter a x distance to jog",type=float)
         parser.add_argument('-y', help="enter a y distance to jog",type=float)
         parser.add_argument('-z', help="enter a z distance to jog",type=float)
+        parser.add_argument('-f', help="enter a f feedrate for jogging", type=float)
     def _run(self):
         self._initeventqueue()
         try:
@@ -159,7 +160,7 @@ class _ClientMain(conveyor.main.AbstractMain):
         return code
     def _run_jog(self):
         try:
-            params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z]
+            params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z, self._parsedargs.f]
             self._log.info(
                 'jogging _run_jog')
             code = self._run_client('jog', params)
