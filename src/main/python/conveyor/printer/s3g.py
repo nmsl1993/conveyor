@@ -132,9 +132,7 @@ class S3gPrinter(object):
         #self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:
-                with serial.Serial(self._device, self._baudrate, timeout=0) as serialfp:
-                    serialfp.baudrate = 9600
-                    serialfp.baudrate = self._baudrate
+                with _openserial() as serialfp:
 
                     writer = s3g.Writer.StreamWriter(serialfp)
                     parser = s3g.Gcode.GcodeParser()
