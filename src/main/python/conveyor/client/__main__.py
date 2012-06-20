@@ -46,6 +46,7 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._initsubparser_printtofile,
             self._initsubparser_slice,
             self._initsubparser_jog,
+
             ):
                 method(subparsers)
 
