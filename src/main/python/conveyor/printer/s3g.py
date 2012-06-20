@@ -111,26 +111,8 @@ class S3gPrinter(object):
         task.runningevent.attach(runningcallback)
         return task
 
-    def printLine(self, text):
-        self._log.debug('printing %s', text)
-        def runningcallback(task):
-            try:
-                with serial.Serial(self._device, self._baudrate, timeout=0) as serialfp:
-                    writer = s3g.Writer.StreamWriter(serialfp)
-                    parser = s3g.Gcode.GcodeParser()
-                    parser.state.profile = self._profile
-                    parser.state.SetBuildName(str('xyzzy'))
-                    parser.s3g = s3g.s3g()
-                    parser.s3g.writer = writer
-                    parser.ExecuteLine(data)
-            except Exception as e:
-                self._log.exception('unhandled exception')
-                task.fail(e)
-            else:
-                task.end(None)
-        task = conveyor.task.Task()
-        task.runningevent.attach(runningcallback)
-        return task
+    def getPosition():
+        return S3g.GetPosition();
 
     def printtofile(self, gcodepath, s3gpath):
         self._log.debug('gcodepath=%r', gcodepath)

@@ -103,12 +103,29 @@ class _ClientThread(threading.Thread):
         task.stoppedevent.attach(self._stoppedcallback)
         self._server.appendtask(task)
         return None
-
+    def _jog(self, x=0, y=0, z=0):
+        self._log.debug('jog x %f y %f z %f', x, y, z)
+        '''
+        def runningcallback(task):
+            self._log.info(
+                'jogging: (job %d)', self._id)
+        def heartbeatcallback(task):
+            self._log.info('%r', task.progress)
+        recipemanager = conveyor.recipe.RecipeManager(self._config)
+        recipe = recipemanager.getrecipe(thing)
+        task = recipe.print()
+        task.runningevent.attach(runningcallback)
+        task.heartbeatevent.attach(heartbeatcallback)
+        task.stoppedevent.attach(self._stoppedcallback)
+        self._server.appendtask(task)
+        '''
+        return None
     def run(self):
         self._jsonrpc.addmethod('hello', self._hello)
         self._jsonrpc.addmethod('print', self._print)
         self._jsonrpc.addmethod('printtofile', self._printtofile)
         self._jsonrpc.addmethod('slice', self._slice)
+        self._jsonrpc.addmethod('jog', self._jog);
         self._server.appendclientthread(self)
         try:
             self._jsonrpc.run()

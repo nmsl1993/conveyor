@@ -45,6 +45,7 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._initsubparser_printers,
             self._initsubparser_printtofile,
             self._initsubparser_slice,
+            self._initsubparser_jog,
             ):
                 method(subparsers)
 
@@ -83,7 +84,13 @@ class _ClientMain(conveyor.main.AbstractMain):
         parser.add_argument(
             'gcode', help='the output path for the .gcode file',
             metavar='GCODE')
-
+    def _initsubparser_jog(self, subparsers):
+        parser = subparsers.add_parser('jog', help='jog the makerbot')
+        parser.set_defaults(func=self._run_jog)
+        self._initparser_common(parser)
+        parser.add_argument('-x', help="enter a x distance to jog",type=float)
+        parser.add_argument('-y', help="enter a y distance to jog",type=float)
+        parser.add_argument('-z', help="enter a z distance to jog",type=float)
     def _run(self):
         self._initeventqueue()
         try:
@@ -149,7 +156,12 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._parsedargs.gcode)
         code = self._run_client('slice', params)
         return code
-
+    def _run_jog(self):
+        params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z]
+        self._log.info(
+            'jogging _run_jog')
+        code = self._run_client('jog', params)
+        return code
     def _run_client(self, method, params):
         client = conveyor.client.Client.create(self._socket, method, params)
         code = client.run()
