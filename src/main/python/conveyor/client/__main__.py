@@ -158,9 +158,17 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._parsedargs.gcode)
         code = self._run_client('slice', params)
         return code
+    
+
     def _run_jog(self):
         try:
+            if self._parsedargs.x == None: self._parsedargs.x = 0
+            if self._parsedargs.y == None: self._parsedargs.y = 0
+            if self._parsedargs.z == None: self._parsedargs.z = 0
+            if self._parsedargs.f == None: self._parsedargs.f = 2000
+
             params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z, self._parsedargs.f]
+            self._log.info("jog params: %r", params)
             self._log.info(
                 'jogging _run_jog')
             code = self._run_client('jog', params)
