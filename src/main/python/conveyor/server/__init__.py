@@ -118,8 +118,9 @@ class _ClientThread(threading.Thread):
         task.runningevent.attach(runningcallback)
         task.stoppedevent.attach(self._stoppedcallback)
         self._server.appendtask(task)
-        
         return None
+    def _setEnabled(self, isEnabled):
+        isEnabled if self._log.info("setEnabled true") else self._log.info("setEnabled false")
     def run(self):
         self._jsonrpc.addmethod('hello', self._hello)
         self._jsonrpc.addmethod('print', self._print)

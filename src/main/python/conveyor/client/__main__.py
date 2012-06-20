@@ -46,6 +46,9 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._initsubparser_printtofile,
             self._initsubparser_slice,
             self._initsubparser_jog,
+            self._initsubparser_enable,
+            self._initsubparser_disable,
+
 
             ):
                 method(subparsers)
@@ -93,6 +96,16 @@ class _ClientMain(conveyor.main.AbstractMain):
         parser.add_argument('-y', help="enter a y distance to jog",type=float)
         parser.add_argument('-z', help="enter a z distance to jog",type=float)
         parser.add_argument('-f', help="enter a f feedrate for jogging", type=float)
+    def _initsubparser_enable(self, subparsers):
+        parser = subparsers.add_parser('enable', help='enable stepper motors')
+        parser.set_defaults(func=self._run_enable)
+        parser.set_defaults(func=self._run_printers)
+        self._initparser_common(parser)
+    def _initsubparser_disable(self, subparsers):
+        parser = subparsers.add_parser('disable', help='disable stepper motors')
+        parser.set_defaults(func=self._run_disable)
+        parser.set_defaults(func=self._run_printers)
+        self._initparser_common(parser)
     def _run(self):
         self._initeventqueue()
         try:
@@ -158,7 +171,14 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._parsedargs.gcode)
         code = self._run_client('slice', params)
         return code
-    
+    def _run_enable(self):
+        self._log.info('enabling')
+        code = self._run_client('setEnabled', [True])
+        return code
+    def _run_disable(self):
+        self._log.info('disabling')
+        code = self._run_client('setEnabled', [False])
+        return code
 
     def _run_jog(self):
         try:
