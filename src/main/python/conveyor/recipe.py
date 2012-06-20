@@ -139,7 +139,14 @@ class _GcodeRecipe(Recipe):
         printer = self._createprinter()
         task = printer.printtofile(self._gcode, s3gpath)
         return task
-
+class LineRecipe(Recipe):
+    def __init__(self, config, line):
+        Recipe.__init__(self, config)
+        self._line = line
+    def printLine(self):
+        printer = self._createprinter()
+        task = printer.printLine(self._line)
+        return task
 class _ThingRecipe(Recipe):
     def __init__(self, config, manifest):
         Recipe.__init__(self, config)

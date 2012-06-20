@@ -105,20 +105,20 @@ class _ClientThread(threading.Thread):
         return None
     def _jog(self, x=0, y=0, z=0):
         self._log.debug('jog x %f y %f z %f', x, y, z)
-        '''
+        line = "G1 X%0.3f Y%0.3f Z%0.3f" % (x,y,z)
+        self._log.debug('jog line: %s', line)
         def runningcallback(task):
             self._log.info(
                 'jogging: (job %d)', self._id)
         def heartbeatcallback(task):
             self._log.info('%r', task.progress)
         recipemanager = conveyor.recipe.RecipeManager(self._config)
-        recipe = recipemanager.getrecipe(thing)
-        task = recipe.print()
+        recipe = conveyor.recipe.LineRecipe(self._config, line)
+        task = recipe.printLine()
         task.runningevent.attach(runningcallback)
-        task.heartbeatevent.attach(heartbeatcallback)
         task.stoppedevent.attach(self._stoppedcallback)
         self._server.appendtask(task)
-        '''
+        
         return None
     def run(self):
         self._jsonrpc.addmethod('hello', self._hello)

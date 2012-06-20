@@ -26,7 +26,7 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-
+import traceback
 import conveyor.client
 import conveyor.log
 import conveyor.main
@@ -158,11 +158,16 @@ class _ClientMain(conveyor.main.AbstractMain):
         code = self._run_client('slice', params)
         return code
     def _run_jog(self):
-        params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z]
-        self._log.info(
-            'jogging _run_jog')
-        code = self._run_client('jog', params)
-        return code
+        try:
+            params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z]
+            self._log.info(
+                'jogging _run_jog')
+            code = self._run_client('jog', params)
+            return code
+        except:
+            traceback.print_stack()
+            print("exception in run jog")
+            raise
     def _run_client(self, method, params):
         client = conveyor.client.Client.create(self._socket, method, params)
         code = client.run()
