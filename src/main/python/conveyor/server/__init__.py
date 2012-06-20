@@ -103,12 +103,29 @@ class _ClientThread(threading.Thread):
         task.stoppedevent.attach(self._stoppedcallback)
         self._server.appendtask(task)
         return None
-
+    def _jog(self, x, y, z, f): ##NOTE! because I can't figure out how to make default arguments work here they are implemented in __main__.py  _fillInJogArgs()for the client
+        self._log.debug('jog x %f y %f z %f f %f', x, y, z, f)
+        line = "G1 X%0.3f Y%0.3f Z%0.3f F%0.3f" % (x,y,z,f)
+        self._log.debug('jog line: %s', line)
+        def runningcallback(task):
+            self._log.info(
+                'jogging: (job %d)', self._id)
+        def heartbeatcallback(task):
+            self._log.info('%r', task.progress)
+        recipemanager = conveyor.recipe.RecipeManager(self._config)
+        recipe = conveyor.recipe.LineRecipe(self._config, line)
+        task = recipe.printLine()
+        task.runningevent.attach(runningcallback)
+        task.stoppedevent.attach(self._stoppedcallback)
+        self._server.appendtask(task)
+        
+        return None
     def run(self):
         self._jsonrpc.addmethod('hello', self._hello)
         self._jsonrpc.addmethod('print', self._print)
         self._jsonrpc.addmethod('printtofile', self._printtofile)
         self._jsonrpc.addmethod('slice', self._slice)
+        self._jsonrpc.addmethod('jog', self._jog);
         self._server.appendclientthread(self)
         try:
             self._jsonrpc.run()

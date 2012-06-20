@@ -95,11 +95,28 @@ class S3gPrinter(object):
                 progress['toolheadtemperature'] = toolheadtemperature
             task.heartbeat(progress)
 
+    def _openserial(self):
+        serialfp = serial.Serial(self._device, self._baudrate, timeout=0.1)
+
+        # begin baud rate hack
+        #
+        # There is an interaction between the 8U2 firmware and
+        # PySerial where PySerial thinks the 8U2 is already running
+        # at the specified baud rate and it doesn't actually issue
+        # the ioctl calls to set the baud rate. We work around it
+        # by setting the baud rate twice, to two different values.
+        # This forces PySerial to issue the correct ioctl calls.
+        serialfp.baudrate = 9600
+        serialfp.baudrate = self._baudrate
+        # end baud rate hack
+
+        return serialfp
+
     def print(self, gcodepath):
         self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:
-                with serial.Serial(self._device, self._baudrate, timeout=0) as serialfp:
+                with self._openserial() as serialfp:
                     writer = s3g.Writer.StreamWriter(serialfp)
                     self._genericprint(task, writer, True, gcodepath)
             except Exception as e:
@@ -110,6 +127,34 @@ class S3gPrinter(object):
         task = conveyor.task.Task()
         task.runningevent.attach(runningcallback)
         return task
+
+    def printLine(self, line):
+        #self._log.debug('gcodepath=%r', gcodepath)
+        def runningcallback(task):
+            try:
+                with self._openserial() as serialfp:
+
+                    writer = s3g.Writer.StreamWriter(serialfp)
+                    parser = s3g.Gcode.GcodeParser()
+                    parser.state.profile = self._profile
+                    parser.state.SetBuildName(str('xyzzy'))
+                    parser.s3g = s3g.s3g()
+                    parser.s3g.writer = writer
+                    self._log.info('issuing G92', line)
+                    parser.ExecuteLine('G92 X0 Y0 Z0 A0 B0')
+                    self._log.info('gcode: %s', line)
+                    parser.ExecuteLine(line)
+            except Exception as e:
+                self._log.exception('unhandled exception')
+                task.fail(e)
+            else:
+                task.end(None)
+        task = conveyor.task.Task()
+        task.runningevent.attach(runningcallback)
+        return task
+
+    def getPosition():
+        return S3g.GetPosition();
 
     def printtofile(self, gcodepath, s3gpath):
         self._log.debug('gcodepath=%r', gcodepath)

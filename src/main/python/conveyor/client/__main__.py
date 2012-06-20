@@ -26,7 +26,7 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-
+import traceback
 import conveyor.client
 import conveyor.log
 import conveyor.main
@@ -45,6 +45,8 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._initsubparser_printers,
             self._initsubparser_printtofile,
             self._initsubparser_slice,
+            self._initsubparser_jog,
+
             ):
                 method(subparsers)
 
@@ -83,7 +85,14 @@ class _ClientMain(conveyor.main.AbstractMain):
         parser.add_argument(
             'gcode', help='the output path for the .gcode file',
             metavar='GCODE')
-
+    def _initsubparser_jog(self, subparsers):
+        parser = subparsers.add_parser('jog', help='jog the makerbot')
+        parser.set_defaults(func=self._run_jog)
+        self._initparser_common(parser)
+        parser.add_argument('-x', help="enter a x distance to jog",type=float)
+        parser.add_argument('-y', help="enter a y distance to jog",type=float)
+        parser.add_argument('-z', help="enter a z distance to jog",type=float)
+        parser.add_argument('-f', help="enter a f feedrate for jogging", type=float)
     def _run(self):
         self._initeventqueue()
         try:
@@ -149,7 +158,25 @@ class _ClientMain(conveyor.main.AbstractMain):
             self._parsedargs.gcode)
         code = self._run_client('slice', params)
         return code
+    
 
+    def _run_jog(self):
+        try:
+            if self._parsedargs.x == None: self._parsedargs.x = 0
+            if self._parsedargs.y == None: self._parsedargs.y = 0
+            if self._parsedargs.z == None: self._parsedargs.z = 0
+            if self._parsedargs.f == None: self._parsedargs.f = 2000
+
+            params = [self._parsedargs.x,self._parsedargs.y,self._parsedargs.z, self._parsedargs.f]
+            self._log.info("jog params: %r", params)
+            self._log.info(
+                'jogging _run_jog')
+            code = self._run_client('jog', params)
+            return code
+        except:
+            traceback.print_stack()
+            print("exception in run jog")
+            raise
     def _run_client(self, method, params):
         client = conveyor.client.Client.create(self._socket, method, params)
         code = client.run()
