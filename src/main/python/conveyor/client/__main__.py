@@ -99,12 +99,10 @@ class _ClientMain(conveyor.main.AbstractMain):
     def _initsubparser_enable(self, subparsers):
         parser = subparsers.add_parser('enable', help='enable stepper motors')
         parser.set_defaults(func=self._run_enable)
-        parser.set_defaults(func=self._run_printers)
         self._initparser_common(parser)
     def _initsubparser_disable(self, subparsers):
         parser = subparsers.add_parser('disable', help='disable stepper motors')
         parser.set_defaults(func=self._run_disable)
-        parser.set_defaults(func=self._run_printers)
         self._initparser_common(parser)
     def _run(self):
         self._initeventqueue()

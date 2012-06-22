@@ -120,13 +120,38 @@ class _ClientThread(threading.Thread):
         self._server.appendtask(task)
         return None
     def _setEnabled(self, isEnabled):
-        isEnabled if self._log.info("setEnabled true") else self._log.info("setEnabled false")
+        self._log.info("setEnableds: %i", isEnabled)
+        def runningcallback(task):
+            self._log.info('setEnabled: (job %d)', self._id)
+        def heartbeatcallback(task):
+            pass
+            #self._log.info('%r', task.progress)
+        recipemanager = conveyor.recipe.RecipeManager(self._config)
+        recipe = conveyor.recipe.LineRecipe(self._config, 'G92')
+        task = recipe.printLine()
+        task.runningevent.attach(runningcallback)
+        task.stoppedevent.attach(self._stoppedcallback)
+        self._server.appendtask(task)
+        if isEnabled:
+            recipe.line = 'G1 X0 Y0 Z0 F2000'
+            task = recipe.printLine()
+            task.runningevent.attach(runningcallback)
+            task.stoppedevent.attach(self._stoppedcallback)
+            self._server.appendtask(task)
+        else:
+            recipe.line = 'M18 X Y Z A B'
+            task = recipe.printLine()
+            task.runningevent.attach(runningcallback)
+            task.stoppedevent.attach(self._stoppedcallback)
+            self._server.appendtask(task)
+        return None
     def run(self):
         self._jsonrpc.addmethod('hello', self._hello)
         self._jsonrpc.addmethod('print', self._print)
         self._jsonrpc.addmethod('printtofile', self._printtofile)
         self._jsonrpc.addmethod('slice', self._slice)
         self._jsonrpc.addmethod('jog', self._jog);
+        self._jsonrpc.addmethod('setEnabled', self._setEnabled)
         self._server.appendclientthread(self)
         try:
             self._jsonrpc.run()
