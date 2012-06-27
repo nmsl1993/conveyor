@@ -70,6 +70,7 @@ class S3gPrinter(object):
             polltime = now + self._pollinterval
         totallines, totalbytes = self._countgcodelines(gcodepath)
         currentbyte = 0
+        progress = dict()
         for currentline, data in enumerate(self._gcodelines(gcodepath)):
             currentbyte += len(data)
             if polltemperature:
@@ -82,7 +83,7 @@ class S3gPrinter(object):
                     polltime = now + self._pollinterval
             data = data.strip()
             data = str(data)
-            self._log.info('gcode: %s', data)
+            self._log.debug('gcode: %s', data)
             parser.ExecuteLine(data)
             progress = {
                 'currentline': currentline,
@@ -93,7 +94,8 @@ class S3gPrinter(object):
             if polltemperature:
                 progress['platformtemperature'] = platformtemperature
                 progress['toolheadtemperature'] = toolheadtemperature
-            task.heartbeat(progress)
+            if currentline % 100 == 0: task.heartbeat(progress)
+        task.heartbeat(progress)
 
     def _openserial(self):
         serialfp = serial.Serial(self._device, self._baudrate, timeout=0.1)
