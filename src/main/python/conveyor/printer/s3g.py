@@ -58,7 +58,7 @@ class S3gPrinter(object):
         return (lines, bytes)
 
     def _genericprint(self, job, task, writer, polltemperature):
-        gcodepath = job._gcodepath;
+        gcodepath = job.gcodepath;
         parser = s3g.Gcode.GcodeParser()
         parser.state.profile = self._profile
         parser.state.SetBuildName(str(job.name))
@@ -115,7 +115,7 @@ class S3gPrinter(object):
         return serialfp
 
     def print(self, job):
-        gcodepath = job._gcodepath
+        gcodepath = job.gcodepath
         self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:
@@ -132,8 +132,8 @@ class S3gPrinter(object):
         return task
 
     def printtofile(self, job):
-        gcodepath = job._gcodepath
-        s3gpath = job._s3gpath;
+        gcodepath = job.gcodepath
+        s3gpath = job.s3gpath;
         self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:

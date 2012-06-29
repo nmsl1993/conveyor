@@ -146,7 +146,7 @@ class _GcodeRecipe(Recipe):
     def _createjob(self):
         job = conveyor.job.job()
         job.setname_frompath(self._path)
-        job._gcodepath = self._path
+        job.gcodepath = self._path
         return job;
     def print(self):
         printer = self._createprinter()
@@ -157,7 +157,7 @@ class _GcodeRecipe(Recipe):
     def printtofile(self, s3gpath):
         printer = self._createprinter()
         job = self._createjob()
-        job._s3gpath = s3gpath;
+        job.s3gpath = s3gpath;
         task = printer.printtofile(job)
         return task
 
@@ -182,7 +182,7 @@ class _StlRecipe(Recipe):
         task1 = toolpath.generate(self._path, gcodepath)
         printer = self._createprinter()
         job = self._createjob()
-        job._gcodepath = gcodepath
+        job.gcodepath = gcodepath
         task2 = printer.print(job)
         def endcallback(task):
             os.unlink(gcodepath)
@@ -199,8 +199,8 @@ class _StlRecipe(Recipe):
         task1 = toolpath.generate(self._path, gcodepath)
         printer = self._createprinter()
         job = self._createjob()
-        job._gcodepath = gcodepath
-        job._s3gpath = s3gpath
+        job.gcodepath = gcodepath
+        job.s3gpath = s3gpath
         task2 = printer.printtofile(job)
         def endcallback(task):
             os.unlink(gcodepath)
@@ -274,7 +274,7 @@ class _SingleThingRecipe(_ThingRecipe):
         task1 = toolpath.generate(objectpath, gcodepath)
         printer = self._createprinter()
         job = self._createjob()
-        job._gcodepath = gcodepath;
+        job.gcodepath = gcodepath;
         task2 = printer.print(job)
         def endcallback(task):
             os.unlink(gcodepath)
@@ -293,8 +293,8 @@ class _SingleThingRecipe(_ThingRecipe):
         task1 = toolpath.generate(objectpath, gcodepath)
         printer = self._createprinter()
         job = self._createjob()
-        job._gcodepath = gcodepath;
-        self._s3gpath = s3gpath;
+        job.gcodepath = gcodepath;
+        job.s3gpath = s3gpath;
         task2 = printer.printtofile(job)
         def endcallback(task):
             os.unlink(gcodepath)
