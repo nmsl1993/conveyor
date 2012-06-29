@@ -57,10 +57,12 @@ class S3gPrinter(object):
             bytes += len(data)
         return (lines, bytes)
 
-    def _genericprint(self, task, writer, polltemperature, gcodepath):
+    def _genericprint(self, job, task, writer, polltemperature):
+        gcodepath = job._gcodepath;
         parser = s3g.Gcode.GcodeParser()
         parser.state.profile = self._profile
-        parser.state.SetBuildName(str('xyzzy'))
+        parser.state.SetBuildName(str(job.name))
+        self._log.debug("the build name is : %s", parser.state.values['build_name'])
         parser.s3g = s3g.s3g()
         parser.s3g.writer = writer
         if polltemperature:
@@ -112,13 +114,14 @@ class S3gPrinter(object):
 
         return serialfp
 
-    def print(self, gcodepath):
+    def print(self, job):
+        gcodepath = job._gcodepath
         self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:
                 with self._openserial() as serialfp:
                     writer = s3g.Writer.StreamWriter(serialfp)
-                    self._genericprint(task, writer, True, gcodepath)
+                    self._genericprint(job, task, writer, True)
             except Exception as e:
                 self._log.exception('unhandled exception')
                 task.fail(e)
@@ -128,13 +131,15 @@ class S3gPrinter(object):
         task.runningevent.attach(runningcallback)
         return task
 
-    def printtofile(self, gcodepath, s3gpath):
+    def printtofile(self, job):
+        gcodepath = job._gcodepath
+        s3gpath = job._s3gpath;
         self._log.debug('gcodepath=%r', gcodepath)
         def runningcallback(task):
             try:
                 with open(s3gpath, 'w') as s3gfp:
                     writer = s3g.Writer.FileWriter(s3gfp)
-                    self._genericprint(task, writer, False, gcodepath)
+                    self._genericprint(job, task, writer, False)
             except Exception as e:
                 self._log.exception('unhandled exception')
                 task.fail(e)

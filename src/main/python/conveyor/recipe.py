@@ -32,6 +32,7 @@ except ImportError:
 import conveyor.enum
 import conveyor.process
 import conveyor.task
+import conveyor.job
 import conveyor.thing
 import conveyor.printer.s3g
 import conveyor.toolpath.miraclegrue
@@ -127,7 +128,8 @@ class Recipe(object):
         printer = conveyor.printer.s3g.S3gPrinter(
             profile, serialport, baudrate)
         return printer
-
+    def _createjob(self):
+        raise NotImplementedError
     def print(self):
         raise NotImplementedError
 
@@ -141,15 +143,22 @@ class _GcodeRecipe(Recipe):
     def __init__(self, config, path):
         Recipe.__init__(self, config)
         self._path = path
-
+    def _createjob(self):
+        job = conveyor.job.job()
+        job.setname_frompath(self._path)
+        job._gcodepath = self._path
+        return job;
     def print(self):
         printer = self._createprinter()
-        task = printer.print(self._path)
+        job = self._createjob()
+        task = printer.print(job)
         return task
 
     def printtofile(self, s3gpath):
         printer = self._createprinter()
-        task = printer.printtofile(self._path, s3gpath)
+        job = self._createjob()
+        job._s3gpath = s3gpath;
+        task = printer.printtofile(job)
         return task
 
 # TODO: share code between _StlRecipe and _SingleThingRecipe.
@@ -159,6 +168,11 @@ class _StlRecipe(Recipe):
         Recipe.__init__(self, config)
         self._path = path
 
+    def _createjob(self):
+        job = conveyor.job.job()
+        job.setname_frompath(self._path)
+        return job
+
     def print(self):
         toolpath = self._createtoolpath()
         with tempfile.NamedTemporaryFile(suffix='.gcode', delete=False) as gcodefp:
@@ -167,7 +181,9 @@ class _StlRecipe(Recipe):
         os.unlink(gcodepath)
         task1 = toolpath.generate(self._path, gcodepath)
         printer = self._createprinter()
-        task2 = printer.print(gcodepath)
+        job = self._createjob()
+        job._gcodepath = gcodepath
+        task2 = printer.print(job)
         def endcallback(task):
             os.unlink(gcodepath)
         task = conveyor.process.tasksequence([task1, task2])
@@ -182,7 +198,10 @@ class _StlRecipe(Recipe):
         os.unlink(gcodepath)
         task1 = toolpath.generate(self._path, gcodepath)
         printer = self._createprinter()
-        task2 = printer.printtofile(gcodepath, s3gpath)
+        job = self._createjob()
+        job._gcodepath = gcodepath
+        job._s3gpath = s3gpath
+        task2 = printer.printtofile(job)
         def endcallback(task):
             os.unlink(gcodepath)
         task = conveyor.process.tasksequence([task1, task2])
@@ -237,6 +256,13 @@ class _ThingRecipe(Recipe):
         return task
 
 class _SingleThingRecipe(_ThingRecipe):
+    def _createjob(self):
+        job = conveyor.job.job()
+        instance = self._getinstance_a()
+        objectpath = os.path.join(self._manifest.base, instance.object.name)
+        job.setname_frompath(objectpath)
+        return job
+
     def print(self):
         toolpath = self._createtoolpath()
         instance = self._getinstance_a()
@@ -247,7 +273,9 @@ class _SingleThingRecipe(_ThingRecipe):
         os.unlink(gcodepath)
         task1 = toolpath.generate(objectpath, gcodepath)
         printer = self._createprinter()
-        task2 = printer.print(gcodepath)
+        job = self._createjob()
+        job._gcodepath = gcodepath;
+        task2 = printer.print(job)
         def endcallback(task):
             os.unlink(gcodepath)
         task = conveyor.process.tasksequence([task1, task2])
@@ -264,7 +292,10 @@ class _SingleThingRecipe(_ThingRecipe):
         os.unlink(gcodepath)
         task1 = toolpath.generate(objectpath, gcodepath)
         printer = self._createprinter()
-        task2 = printer.printtofile(gcodepath, s3gpath)
+        job = self._createjob()
+        job._gcodepath = gcodepath;
+        self._s3gpath = s3gpath;
+        task2 = printer.printtofile(job)
         def endcallback(task):
             os.unlink(gcodepath)
         task = conveyor.process.tasksequence([task1, task2])
