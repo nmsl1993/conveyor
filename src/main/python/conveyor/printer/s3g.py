@@ -62,7 +62,7 @@ class S3gPrinter(object):
         parser = s3g.Gcode.GcodeParser()
         parser.state.profile = self._profile
         parser.state.SetBuildName(str(job.name))
-        self._log.debug("the build name is : %s", parser.state.values['build_name'])
+        self._log.info("the build name is : %s", parser.state.values['build_name'])
         parser.s3g = s3g.s3g()
         parser.s3g.writer = writer
         if polltemperature:
