@@ -26,6 +26,8 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+import conveyor.dictconfig
+
 
 class ListHandler(logging.Handler):
     list = []
@@ -62,7 +64,8 @@ def listlogging(level):
         'incremental': False,
         'disable_existing_loggers': False
     }
-    logging.config.dictConfig(dct)
+    conveyor.dictconfig.dictConfig(dct)
+
 
 class _ListHandlerTestCase(unittest.TestCase):
     def setUp(self):

@@ -22,6 +22,7 @@ from __future__ import (absolute_import, print_function, unicode_literals)
 import json
 import logging
 import logging.config
+
 import os.path
 import sys
 import time
@@ -32,6 +33,7 @@ except ImportError:
     import unittest
 
 import conveyor.event
+import conveyor.dictconfig
 
 def earlylogging(program): # pragma: no cover
     '''Initialize console logging for the early part of a conveyor process.'''
@@ -75,7 +77,7 @@ def earlylogging(program): # pragma: no cover
         'incremental': False,
         'disable_existing_loggers': True
     }
-    logging.config.dictConfig(dct)
+    conveyor.dictconfig.dictConfig(dct)
 
 def getfiles():
     '''Return an iterator of the files open by the logging system.

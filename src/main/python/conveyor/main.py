@@ -34,6 +34,7 @@ except ImportError:
 
 import conveyor.debug
 import conveyor.ipc
+import conveyor.dictconfig
 
 class AbstractMain(object):
     def __init__(self, program, configsection):
@@ -255,7 +256,7 @@ class AbstractMain(object):
             dct['incremental'] = False
             dct['disable_existing_loggers'] = False
             try:
-                logging.config.dictConfig(dct)
+                conveyor.dictconfig.dictConfig(dct)
             except ValueError as e:
                 code = 1
                 self._log.critical(
