@@ -37,4 +37,6 @@ echo "Installing modules"
 pip install -q --use-mirrors coverage doxypy mock lockfile python-daemon unittest-xml-reporting argparse unittest2
 echo "Installing pyserial egg"
 easy_install -q submodule/conveyor_bins/pyserial-2.7_mb2.1-py$PYVERSION.egg
+echo "Installing paramiko"
+pip install paramiko
 
