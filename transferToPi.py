@@ -1,18 +1,24 @@
-import argparse, os, sys, re, paramiko, string
+import argparse, os, sys, re, paramiko, string,time
 
-output_dir = "makerbot/conveyor/remote_obj_dir/"
-raspi_ip = '192.168.1.121'
-name = 'noah'
-passwd = 'uwishuknewthis'
+conveyor_dir = "makerbot/conveyor/"
+output_dir = conveyor_dir + "remote_obj_dir/"
 
-#passwd = 'uWishuknwthis'
+raspi_ip = 'raspi ip goes here'
+name = 'usergoesheere'
+passwd = 'passgoeshere'
+
+printtofile = False
+use_gcodefile_start_end = True
 
 print sys.argv
+target_index = -1
 for i, item in enumerate(sys.argv):
     if re.search('\.gcode', item):
         target_index = i
+        break
+else:
+    raise Exception("Couldnt find a gcode argument")
 print sys.argv
-
 #Open File
 target = open(sys.argv[target_index],'r')
 
@@ -31,19 +37,33 @@ try:
     ftp.close()
 
     new_name = '~/' + output_dir + os.path.basename(target.name)
+    print target.name, new_name
     sys.argv[target_index] = new_name #fix path to remote
 
     print "COPYING DONE"
 
     print "EXECUTING PRINT REMOTELY"
-    cmd = 'python conveyor_cmdline_client.py -c conveyor-dev.conf printtofile ' + new_name + ' ' + string.replace(new_name, '.gcode', ',s3g')
+
+    if not printtofile:
+        cmd = 'cd ~/' + conveyor_dir + ';' + 'python conveyor_cmdline_client.py -c conveyor-dev.conf print ' + new_name + ' --skip-start-end'
+    else:
+        cmd = 'cd ~/' + conveyor_dir + ';' + 'python conveyor_cmdline_client.py -c conveyor-dev.conf printtofile ' + new_name + ' ' + string.replace(new_name, '.gcode', '.s3g')
+    
+    
+    print cmd
+    #cmd = 'cd ~/' + conveyor_dir + '; ls'
     stdin, stdout, stderr = ssh.exec_command(cmd)
+
+    #while not stdout.channel.exit_status_ready():
+      #  if stdout.recv_ready():
+         #   print stdout.recv()
+    stdout.channel.recv_exit_status()
     print stdout.readlines()
 except Exception, e:
     print "ERROR"
     print "%s" % e
 else:
-    print "SUCESS"
+    print "SUCCESS"
 finally:
     ssh.close()
     print "QUIT"
