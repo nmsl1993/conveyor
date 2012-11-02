@@ -39,4 +39,7 @@ echo "Installing pyserial egg"
 easy_install -q submodule/conveyor_bins/pyserial-2.7_mb2.1-py$PYVERSION.egg
 echo "Installing paramiko"
 pip install paramiko
+echo "installing makerbot driver"
+#installing makerbot_driver
+easy_install submodule/conveyor_bins/pyserial-2.7_mb2.1-py2.7.egg
 
