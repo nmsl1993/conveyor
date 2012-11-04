@@ -24,3 +24,5 @@ if [ ! -z $VIRTUAL_ENV ] ; then
 	deactivate
 fi
 
+echo "clearing log"
+cat /dev/null > conveyord.log

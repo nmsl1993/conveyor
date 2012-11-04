@@ -23,6 +23,7 @@ import collections
 import logging
 import makerbot_driver
 import makerbot_driver.Writer
+import makerbot_driver.Factory
 import os.path
 import serial
 import threading
@@ -53,7 +54,7 @@ class S3gDetectorThread(conveyor.stoppable.StoppableThread):
     def _runiteration(self):
         self._expire_blacklist()
         profiledir = self._config['common']['profiledir']
-        factory = makerbot_driver.BotFactory(profiledir)
+        factory = makerbot_driver.MachineFactory(profiledir)
         available = self._detector.get_available_machines().copy()
         self._log.debug('self._available = %r', self._available)
         self._log.debug('available = %r', available)
