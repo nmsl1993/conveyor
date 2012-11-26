@@ -404,7 +404,175 @@ class S3gDriver(object):
                 'name': 'print',
                 'progress': 0
             }
-            current_progress = self._update_progress(
+            current_pAffero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import (absolute_import, print_function, unicode_literals)
+
+import collections
+import logging
+import makerbot_driver
+import makerbot_driver.Writer
+import makerbot_driver.Factory
+import os.path
+import serial
+import threading
+import time
+
+import conveyor.event
+import conveyor.task
+
+class S3gDetectorThread(conveyor.stoppable.StoppableThread):
+    def __init__(self, config, server):
+        conveyor.stoppable.StoppableThread.__init__(self)
+        self._available = {}
+        self._blacklist = {}
+        self._config = config
+        self._condition = threading.Condition()
+        self._detector = makerbot_driver.MachineDetector()
+        self._log = logging.getLogger(self.__class__.__name__)
+        self._server = server
+        self._stop = False
+
+    def _expire_blacklist(self):
+        now = time.time()
+        for portname, unlisttime in self._blacklist.items():
+            if now >= unlisttime:
+                del self._blacklist[portname]
+                self._log.debug('removing port from blacklist: %r', portname)
+
+    def _runiteration(self):
+        self._expire_blacklist()
+        profiledir = self._config['common']['profiledir']
+        factory = makerbot_driver.MachineFactory(profiledir)
+        available = self._detector.get_available_machines().copy()
+        self._log.debug('self._available = %r', self._available)
+        self._log.debug('available = %r', available)
+        self._log.debug('blacklist = %r', self._blacklist)
+        for portname in self._blacklist.keys():
+            if portname in available:
+                del available[portname]
+        self._log.debug('available (post blacklist) = %r', available)
+        old_keys = set(self._available.keys())
+        new_keys = set(available.keys())
+        detached = old_keys - new_keys
+        attached = new_keys - old_keys
+        self._log.debug('detached = %r', detached)
+        self._log.debug('attached = %r', attached)
+        for portname in detached:
+            self._server.removeprinter(portname)
+        if len(attached) > 0:
+            for portname in attached:
+                try:
+                    s3g, profile = factory.build_from_port(portname, True)
+                    printerid = available[portname]['iSerial']
+                    fp = s3g.writer.file
+                    s3gprinterthread = S3gPrinterThread(
+                        self._server, self._config, portname, printerid, profile,
+                        fp)
+                    s3gprinterthread.start()
+                    self._server.appendprinter(portname, s3gprinterthread)
+                except:
+                    self._log.exception('unhandled exception')
+                    self.blacklist(portname)
+        self._available = available.copy()
+
+    def blacklist(self, portname):
+        with self._condition:
+            if portname in self._available:
+                del self._available[portname]
+            now = time.time()
+            unlisttime = now + self._config['server']['blacklisttime']
+            self._blacklist[portname] = unlisttime
+
+    def run(self):
+        try:
+            while not self._stop:
+                with self._condition:
+                    self._runiteration()
+                if not self._stop:
+                    with self._condition:
+                        self._condition.wait(10.0)
+        except:
+            self._log.error('unhandled exception', exc_info=True)
+
+    def stop(self):
+        with self._condition:
+            self._stop = True
+            self._condition.notify_all()
+
+def _gettemperature(profile, s3g):
+    tools = {}
+    for key in profile.values['tools'].keys():
+        tool = int(key)
+        tools[key] = s3g.get_toolhead_temperature(tool)
+    heated_platforms = {}
+    for key in profile.values['heated_platforms'].keys():
+        heated_platform = int(key)
+        heated_platforms[key] = s3g.get_platform_temperature(heated_platform)
+    temperature = {
+        'tools': tools,
+        'heated_platforms': heated_platforms
+    }
+    return temperature
+
+class PrinterThreadNotIdleError(Exception):
+    def __init__(self):
+        pass
+
+class PrinterThreadBadStateError(Exception):
+    def __init__(self):
+        pass
+
+class S3gPrinterThread(conveyor.stoppable.StoppableThread):
+    def __init__(self, server, config, portname, printerid, profile, fp):
+        conveyor.stoppable.StoppableThread.__init__(self)
+        self._lock = threading.Lock()
+        self._condition = threading.Condition(self._lock)
+        self._config = config
+        self._currenttask = None
+        self._fp = fp
+        self._log = logging.getLogger(self.__class__.__name__)
+        self._portname = portname
+        self._printerid = printerid
+        self._profile = profile
+        self._queue = collections.deque()
+        self._server = server
+        self._stop = False
+        self._curprintjob = None
+
+        #states
+        self._states = {
+            "idle" : True,
+            "printing"  : False,
+            "uploadingfirmware"  : False,
+            "readingeeprom"  : False,
+            "writingeeprom"  : False,
+            "resettofactory" : False,
+            }
+
+    def _statetransition(self, current, new):
+        #The current state should be true
+        if not self._states[current]:
+            self._log.info("error=printer_thread_not_idle, action=%s", new)
+            raise PrinterThreadNotIdleError
+        self._states[current] = False
+        #All states should be false at this point
+        if True in self._states.values():
+            self._log.info("error=bad_printer_thread_state, action=%s", new)
+            raise PrinterThreadBadStateError
+        self._states[new] = True
+        self._log.debug('oldstate=%s, newstate=%s', current, new)
+
+    def getportname(self):
+        return self._portname
+
+    def getprinterid(self):
+        return self._printerid
+
+    def getprofile(self):
+        return self._profile
+rogress = self._update_progress(
                 current_progress, new_progress, task)
             parser = makerbot_driver.Gcode.GcodeParser()
             parser.state.profile = profile
